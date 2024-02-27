@@ -1,0 +1,174 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define FILE_NAME "employee_data.dat"
+
+// Employee structure
+typedef struct Employee {
+    int id;
+    char name[50];
+    float salary;
+} Employee;
+
+// Function declarations
+void addEmployee();
+void displayAllEmployees();
+void searchEmployeeById();
+void modifyEmployeeDetails();
+
+int main() {
+    int choice;
+
+    do {
+        printf("\nEmployee Details Processing\n");
+        printf("1. Add Employee\n");
+        printf("2. Display All Employees\n");
+        printf("3. Search Employee by ID\n");
+        printf("4. Modify Employee Details\n");
+        printf("0. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                addEmployee();
+                break;
+            case 2:
+                displayAllEmployees();
+                break;
+            case 3:
+                searchEmployeeById();
+                break;
+            case 4:
+                modifyEmployeeDetails();
+                break;
+            case 0:
+                printf("Exiting the program.\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+
+// Function to add a new employee to the file
+void addEmployee() {
+    FILE *file = fopen(FILE_NAME, "ab");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    Employee newEmployee;
+
+    printf("Enter Employee ID: ");
+    scanf("%d", &newEmployee.id);
+
+    printf("Enter Employee Name: ");
+    scanf("%s", newEmployee.name);
+
+    printf("Enter Employee Salary: ");
+    scanf("%f", &newEmployee.salary);
+
+    fwrite(&newEmployee, sizeof(Employee), 1, file);
+
+    fclose(file);
+
+    printf("Employee added successfully.\n");
+}
+
+// Function to display all employees from the file
+void displayAllEmployees() {
+    FILE *file = fopen(FILE_NAME, "rb");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    Employee readEmployee;
+
+    printf("\nEmployee Details:\n");
+    while (fread(&readEmployee, sizeof(Employee), 1, file) == 1) {
+        printf("ID: %d, Name: %s, Salary: %.2f\n", readEmployee.id, readEmployee.name, readEmployee.salary);
+    }
+
+    fclose(file);
+}
+
+// Function to search for an employee by ID
+void searchEmployeeById() {
+    FILE *file = fopen(FILE_NAME, "rb");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    int searchId;
+    Employee readEmployee;
+
+    printf("Enter Employee ID to search: ");
+    scanf("%d", &searchId);
+
+    int found = 0;
+
+    while (fread(&readEmployee, sizeof(Employee), 1, file) == 1) {
+        if (readEmployee.id == searchId) {
+            found = 1;
+            printf("Employee found:\n");
+            printf("ID: %d, Name: %s, Salary: %.2f\n", readEmployee.id, readEmployee.name, readEmployee.salary);
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Employee with ID %d not found.\n", searchId);
+    }
+
+    fclose(file);
+}
+
+// Function to modify employee details by ID
+void modifyEmployeeDetails() {
+    FILE *file = fopen(FILE_NAME, "r+b");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    int modifyId;
+    Employee modifyEmployee;
+
+    printf("Enter Employee ID to modify: ");
+    scanf("%d", &modifyId);
+
+    int found = 0;
+
+    while (fread(&modifyEmployee, sizeof(Employee), 1, file) == 1) {
+        if (modifyEmployee.id == modifyId) {
+            found = 1;
+
+            printf("Enter new Employee Name: ");
+            scanf("%s", modifyEmployee.name);
+
+            printf("Enter new Employee Salary: ");
+            scanf("%f", &modifyEmployee.salary);
+
+            // Move the file pointer back by the size of Employee structure to overwrite the existing record
+            fseek(file, -sizeof(Employee), SEEK_CUR);
+
+            // Write the modified Employee structure to the file
+            fwrite(&modifyEmployee, sizeof(Employee), 1, file);
+
+            printf("Employee details modified successfully.\n");
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Employee with ID %d not found.\n", modifyId);
+    }
+
+    fclose(file);
+}
