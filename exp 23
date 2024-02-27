@@ -1,0 +1,97 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+typedef struct Process {
+    int id;
+    int arrivalTime;
+    int burstTime;
+    int priority;
+    int remainingTime;
+} Process;
+
+void swap(Process *xp, Process *yp) {
+    Process temp = *xp;
+    *xp = *yp;
+    *yp = temp;
+}
+
+void sortByPriority(Process processes[], int n) {
+    int i, j;
+    for (i = 0; i < n-1; i++) {
+        for (j = 0; j < n-i-1; j++) {
+            if (processes[j].priority < processes[j+1].priority) {
+                swap(&processes[j], &processes[j+1]);
+            }
+        }
+    }
+}
+
+int findNextProcess(Process processes[], int n, int currentTime) {
+    int minPriority = INT_MAX;
+    int nextProcess = -1;
+
+    for (int i = 0; i < n; i++) {
+        if (processes[i].arrivalTime <= currentTime && processes[i].remainingTime > 0 && processes[i].priority < minPriority) {
+            minPriority = processes[i].priority;
+            nextProcess = i;
+        }
+    }
+
+    return nextProcess;
+}
+
+void priorityScheduling(Process processes[], int n) {
+    int currentTime = 0;
+
+    printf("Gantt Chart:\n");
+    while (1) {
+        int nextProcess = findNextProcess(processes, n, currentTime);
+        if (nextProcess == -1) {
+            // No processes left to execute
+            break;
+        }
+
+        printf("| P%d ", processes[nextProcess].id);
+
+        // Execute the process for 1 unit of time
+        processes[nextProcess].remainingTime--;
+        currentTime++;
+
+        if (processes[nextProcess].remainingTime == 0) {
+            // Process is completed
+            printf("|");
+        }
+    }
+
+    printf("\n");
+}
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    Process processes[n];
+
+    for (int i = 0; i < n; i++) {
+        processes[i].id = i+1;
+        printf("Enter arrival time, burst time, and priority for process P%d: ", i+1);
+        scanf("%d %d %d", &processes[i].arrivalTime, &processes[i].burstTime, &processes[i].priority);
+        processes[i].remainingTime = processes[i].burstTime;
+    }
+
+    sortByPriority(processes, n);
+
+    printf("\nProcesses scheduled using pre-emptive priority scheduling algorithm:\n");
+    printf("------------------------------------------------------------\n");
+    printf("Process | Arrival Time | Burst Time | Priority\n");
+    printf("------------------------------------------------------------\n");
+    for (int i = 0; i < n; i++) {
+        printf("   P%d   |      %d       |      %d      |      %d\n", processes[i].id, processes[i].arrivalTime, processes[i].burstTime, processes[i].priority);
+    }
+    printf("------------------------------------------------------------\n");
+
+    priorityScheduling(processes, n);
+
+    return 0;
+}
