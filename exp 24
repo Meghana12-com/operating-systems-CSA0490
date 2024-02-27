@@ -1,0 +1,70 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+typedef struct Process {
+    int id;
+    int arrivalTime;
+    int burstTime;
+} Process;
+
+void swap(Process *xp, Process *yp) {
+    Process temp = *xp;
+    *xp = *yp;
+    *yp = temp;
+}
+
+void sortByBurstTime(Process processes[], int n) {
+    int i, j;
+    for (i = 0; i < n-1; i++) {
+        for (j = 0; j < n-i-1; j++) {
+            if (processes[j].burstTime > processes[j+1].burstTime) {
+                swap(&processes[j], &processes[j+1]);
+            }
+        }
+    }
+}
+
+void sjfScheduling(Process processes[], int n) {
+    int currentTime = 0;
+
+    printf("Gantt Chart:\n");
+    for (int i = 0; i < n; i++) {
+        printf("| P%d ", processes[i].id);
+
+        currentTime += processes[i].burstTime;
+
+        // Printing the timeline
+        printf("|");
+    }
+
+    printf("\n");
+}
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    Process processes[n];
+
+    for (int i = 0; i < n; i++) {
+        processes[i].id = i+1;
+        printf("Enter arrival time and burst time for process P%d: ", i+1);
+        scanf("%d %d", &processes[i].arrivalTime, &processes[i].burstTime);
+    }
+
+    sortByBurstTime(processes, n);
+
+    printf("\nProcesses scheduled using non-preemptive SJF algorithm:\n");
+    printf("------------------------------------------------------------\n");
+    printf("Process | Arrival Time | Burst Time\n");
+    printf("------------------------------------------------------------\n");
+    for (int i = 0; i < n; i++) {
+        printf("   P%d   |      %d       |      %d      \n", processes[i].id, processes[i].arrivalTime, processes[i].burstTime);
+    }
+    printf("------------------------------------------------------------\n");
+
+    sjfScheduling(processes, n);
+
+    return 0;
+}
