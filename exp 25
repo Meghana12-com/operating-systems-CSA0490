@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <string.h>
+
+#define MAX_MSG_SIZE 256
+
+// Define a structure for the message
+struct Message {
+    long messageType;
+    char messageText[MAX_MSG_SIZE];
+};
+
+int main() {
+    key_t key;
+    int msgQueueId;
+
+    // Generate a unique key for the message queue
+    if ((key = ftok(".", 'a')) == -1) {
+        perror("ftok");
+        exit(EXIT_FAILURE);
+    }
+
+    // Create a message queue
+    if ((msgQueueId = msgget(key, 0666 | IPC_CREAT)) == -1) {
+        perror("msgget");
+        exit(EXIT_FAILURE);
+    }
+
+    pid_t childPid = fork();
+
+    if (childPid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (childPid == 0) {
+        // Child process (Receiver)
+        struct Message receivedMessage;
+
+        // Receive a message from the queue
+        if (msgrcv(msgQueueId, &receivedMessage, MAX_MSG_SIZE, 1, 0) == -1) {
+            perror("msgrcv");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Child Process (Receiver) received message: %s\n", receivedMessage.messageText);
+    } else {
+        // Parent process (Sender)
+        struct Message sentMessage;
+
+        // Prepare the message
+        sentMessage.messageType = 1;
+        strncpy(sentMessage.messageText, "Hello from Parent Process!", MAX_MSG_SIZE);
+
+        // Send the message to the queue
+        if (msgsnd(msgQueueId, &sentMessage, strlen(sentMessage.messageText) + 1, 0) == -1) {
+            perror("msgsnd");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Parent Process (Sender) sent message: %s\n", sentMessage.messageText);
+
+        // Wait for the child process to complete
+        wait(NULL);
+        
+        // Remove the message queue
+        if (msgctl(msgQueueId, IPC_RMID, NULL) == -1) {
+            perror("msgctl");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    return 0;
+}
